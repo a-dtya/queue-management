@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServiceItem {
+public class ServiceItem { // this would be an embedded document within the services_offered field in mongodb
     private String name;
     private String description;
     private int durationInMinutes;
