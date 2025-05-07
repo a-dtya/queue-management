@@ -17,8 +17,13 @@ import java.util.stream.Collectors;
 public class ShopService {
 
     private final ShopRepository shopRepository;
+    private final UserValidationService userValidationService;
 
     public ShopResponse createShop(CreateShopRequest request) {
+        boolean isValidUser = userValidationService.validateUser(request.getOwnerId());
+        if (!isValidUser){
+            throw new RuntimeException("Invalid user : "+ request.getOwnerId());
+        }
         Shop shop = Shop.builder()
                 .name(request.getName())
                 .address(request.getAddress())

@@ -9,21 +9,27 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @Service
 @RequiredArgsConstructor
 public class UserValidationService {
+
     private final WebClient userServiceWebClient;
 
-    public boolean validateUser(String userId){
-        // basically we're making a get req using webclient (custom userservicewebclient created in webclient config)
-        try{
-            return userServiceWebClient.get().uri("api/users/{userId}/validate", userId).retrieve().bodyToMono(Boolean.class).block();
-
-        } catch(WebClientResponseException e) {
+    public boolean validateUser(String userId) {
+        try {
+            // basically we're making a get req using webclient (custom userservicewebclient created in webclient config)
+            return userServiceWebClient.get()
+                    .uri("api/users/{userId}/validate", userId)
+                    .retrieve()
+                    .bodyToMono(Boolean.class)
+                    .block(); // Blocking here for simplicity — suitable for sync service calls
+        } catch (WebClientResponseException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new RuntimeException("User not found with id : " + userId);
+                throw new RuntimeException("User not found with id: " + userId);
             } else if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
-                throw new RuntimeException("Invalid Request");
+                throw new RuntimeException("Invalid request for user ID: " + userId);
+            } else {
+                throw new RuntimeException("Unexpected error: " + e.getMessage(), e);
             }
+        } catch (Exception e) {
+            throw new RuntimeException("Error communicating with USER-SERVICE", e);
         }
-
-
     }
 }
