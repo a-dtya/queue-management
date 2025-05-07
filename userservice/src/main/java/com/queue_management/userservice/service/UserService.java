@@ -4,11 +4,13 @@ import com.queue_management.userservice.dto.RegisterRequest;
 import com.queue_management.userservice.dto.UserResponse;
 import com.queue_management.userservice.model.User;
 import com.queue_management.userservice.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class UserService {
 
     @Autowired
@@ -63,6 +65,7 @@ public class UserService {
     }
 
     public Boolean existByUserId(String userId) {
+        log.info("User Validation API called for user : {} ", userId);
         return repository.existsById(userId);
     }
 }
