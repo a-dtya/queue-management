@@ -1,52 +1,66 @@
 package com.queue_management.queueservice.service;
 
+import com.queue_management.queueservice.dto.CreateQueueEntryRequest;
+import com.queue_management.queueservice.dto.QueueEntryResponse;
+import com.queue_management.queueservice.dto.UpdateQueueEntryRequest;
 import com.queue_management.queueservice.model.QueueEntry;
 import com.queue_management.queueservice.repository.QueueRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class QueueService {
 
     private final QueueRepository queueRepository;
 
-    // Constructor Injection of the QueueRepository
-    public QueueService(QueueRepository queueRepository) {
-        this.queueRepository = queueRepository;
+    public Flux<QueueEntryResponse> getQueueByShop(String shopId) {
+        return queueRepository.findByShopIdOrderByPositionAsc(shopId)
+                .map(this::mapToResponse);
     }
 
-    // Method to get all queue entries for a shop, ordered by position
-    public Flux<QueueEntry> getQueueEntriesByShopId(String shopId) {
-        return queueRepository.findByShopIdOrderByPositionAsc(shopId);
+    public Flux<QueueEntryResponse> getQueueByUser(String userId) {
+        return queueRepository.findByUserId(userId)
+                .map(this::mapToResponse);
+    }
+    public Mono<QueueEntryResponse> createQueueEntry(CreateQueueEntryRequest request) {
+        return queueRepository.findByShopIdOrderByPositionAsc(request.getShopId())
+                .count()
+                .map(count -> QueueEntry.builder()
+                        .userId(request.getUserId())
+                        .shopId(request.getShopId())
+                        .serviceName(request.getServiceName())
+                        .position(Math.toIntExact(count) + 1)
+                        .joinedAt(LocalDateTime.now())
+                        .build()
+                )
+                .flatMap(queueRepository::save)
+                .map(this::mapToResponse);
     }
 
-    // Method to get all queue entries for a specific user
-    public Flux<QueueEntry> getQueueEntriesByUserId(String userId) {
-        return queueRepository.findByUserId(userId);
-    }
-
-    // Method to create a new QueueEntry
-    public Mono<QueueEntry> createQueueEntry(QueueEntry queueEntry) {
-        return queueRepository.save(queueEntry);
-    }
-
-    // Method to update an existing QueueEntry
-    public Mono<QueueEntry> updateQueueEntry(String id, QueueEntry queueEntry) {
-        // Optional: Check if the QueueEntry exists before updating
+    public Mono<QueueEntryResponse> updateQueueEntry(String id, UpdateQueueEntryRequest request) {
         return queueRepository.findById(id)
-                .flatMap(existingEntry -> {
-                    existingEntry.setPosition(queueEntry.getPosition());
-                    existingEntry.setServiceName(queueEntry.getServiceName());
-                    existingEntry.setJoinedAt(queueEntry.getJoinedAt());
-                    existingEntry.setEstimatedServiceTime(queueEntry.getEstimatedServiceTime());
-                    existingEntry.setCompletedAt(queueEntry.getCompletedAt());
-                    return queueRepository.save(existingEntry);
-                });
+                .map(entry -> {
+                    entry.setCompletedAt(request.getCompletedAt());
+                    return entry;
+                })
+                .flatMap(queueRepository::save)
+                .map(this::mapToResponse);
     }
-
-    // Method to delete a QueueEntry by its ID
-    public Mono<Void> deleteQueueEntry(String id) {
-        return queueRepository.deleteById(id);
+    private QueueEntryResponse mapToResponse(QueueEntry entry) {
+        QueueEntryResponse response = new QueueEntryResponse();
+        response.setId(entry.getId());
+        response.setUserId(entry.getUserId());
+        response.setShopId(entry.getShopId());
+        response.setServiceName(entry.getServiceName());
+        response.setPosition(entry.getPosition());
+        response.setJoinedAt(entry.getJoinedAt());
+        response.setEstimatedServiceTime(entry.getEstimatedServiceTime());
+        response.setCompletedAt(entry.getCompletedAt());
+        return response;
     }
 }

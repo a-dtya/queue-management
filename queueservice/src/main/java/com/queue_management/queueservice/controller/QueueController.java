@@ -1,51 +1,40 @@
 package com.queue_management.queueservice.controller;
 
+import com.queue_management.queueservice.dto.CreateQueueEntryRequest;
+import com.queue_management.queueservice.dto.QueueEntryResponse;
+import com.queue_management.queueservice.dto.UpdateQueueEntryRequest;
 import com.queue_management.queueservice.model.QueueEntry;
 import com.queue_management.queueservice.service.QueueService;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/queues")
+@RequestMapping("/api/queue")
+@RequiredArgsConstructor
 public class QueueController {
 
     private final QueueService queueService;
 
-    public QueueController(QueueService queueService) {
-        this.queueService = queueService;
-    }
-
-    // Get all queue entries for a specific shop, ordered by position
-    @GetMapping("/shop/{shopId}")
-    public Flux<QueueEntry> getQueueEntriesByShopId(@PathVariable String shopId) {
-        return queueService.getQueueEntriesByShopId(shopId);
-    }
-
-    // Get all queue entries for a specific user
-    @GetMapping("/user/{userId}")
-    public Flux<QueueEntry> getQueueEntriesByUserId(@PathVariable String userId) {
-        return queueService.getQueueEntriesByUserId(userId);
-    }
-
-    // Create a new queue entry
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<QueueEntry> createQueueEntry(@RequestBody QueueEntry queueEntry) {
-        return queueService.createQueueEntry(queueEntry);
+    public Mono<QueueEntryResponse> createQueueEntry(@RequestBody CreateQueueEntryRequest request) {
+        return queueService.createQueueEntry(request);
     }
 
-    // Update a queue entry
+    @GetMapping("/shop/{shopId}")
+    public Flux<QueueEntryResponse> getQueueByShop(@PathVariable String shopId) {
+        return queueService.getQueueByShop(shopId);
+    }
+
+    @GetMapping("/user/{userId}")
+    public Flux<QueueEntryResponse> getQueueByUser(@PathVariable String userId) {
+        return queueService.getQueueByUser(userId);
+    }
+
     @PutMapping("/{id}")
-    public Mono<QueueEntry> updateQueueEntry(@PathVariable String id, @RequestBody QueueEntry queueEntry) {
-        return queueService.updateQueueEntry(id, queueEntry);
-    }
-
-    // Delete a queue entry
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteQueueEntry(@PathVariable String id) {
-        return queueService.deleteQueueEntry(id);
+    public Mono<QueueEntryResponse> updateQueueEntry(@PathVariable String id, @RequestBody UpdateQueueEntryRequest request) {
+        return queueService.updateQueueEntry(id, request);
     }
 }
+
